@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import "./App.css";
 import ChatInput from "./ChatInput";
 import Question from "./Question";
@@ -9,9 +10,9 @@ function App() {
   const [listOfData, setListOfData] = useState([]);
 
   const addQuestion = (newQuestion) =>
-    setListOfData(data => [...data, { ques: newQuestion }]);
+    setListOfData((data) => [...data, { ques: newQuestion }]);
   const addAnswer = (newAnswer) =>
-    setListOfData(data => [...data, { ans: newAnswer }]);
+    setListOfData((data) => [...data, { ans: newAnswer }]);
   return (
     <>
       <ChatInput addQuestion={addQuestion} addAnswer={addAnswer} />

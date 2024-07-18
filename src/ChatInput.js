@@ -6,9 +6,7 @@ import { callGenerateTextAPI } from "./test";
 import axios from "axios";
 
 function ChatInput({ addQuestion, addAnswer }) {
-  const [val, setVal] = useState(
-    "https://github.com/carbon-design-system/carbon/blob/main/packages/react/src/components/Checkbox/Checkbox.stories.js"
-  );
+  const [val, setVal] = useState("");
   const [isValid, setisValid] = useState(true);
   const fetchGit = async () => {
     const owner = "carbon-design-system";
@@ -17,8 +15,10 @@ function ChatInput({ addQuestion, addAnswer }) {
 
     const preMessage =
       "You are an AI assistant tasked with creating a comprehensive and user-friendly usage document for a UI component. Analyze the following code snippet and use the guidelines to generate a detailed guide:";
-    // const postMessage =  " Guidelines: 1. Document Structure: Create a Markdown document titled Menu Component Guide with the following sections: Description, Purpose, When to Use, When Not to Use, Anatomy, States, Variants, Interactions 2. Description (3-4 sentences): Provide a detailed explanation of what the Accordion component is and its main function. Describe its basic appearance and how it behaves, using analogies if helpful. 3. Purpose (4-5 sentences): Elaborate on how the Accordion improves the user's experience on a website or app. Explain in detail how it helps organize information and why that's beneficial. Discuss common problems it solves and how it enhances user interaction. 4. When to Use (5-6 bullet points): Provide a comprehensive list of scenarios where using an Accordion would be advantageous. Consider various types of content, website layouts, and user needs where it might be particularly useful. For each point, briefly explain why the Accordion is a good choice. 5. When Not to Use (4-5 bullet points): Offer a detailed list of situations where a different design choice might work better. For each point, explain why the Accordion isn't the best fit and suggest an alternative approach or component that might work better. 6. Anatomy (detailed list with descriptions): Break down the Accordion into its main parts (like the overall container, the clickable headers, and the content sections). Provide a thorough explanation of what each part does, how it contributes to the overall functionality, and how users interact with it. 7. States: Describe in detail the different ways the Accordion can appear (like open, closed, or disabled). Explain how users can identify each state, what triggers state changes, and how these states affect the user experience. 8. Variants: If the Accordion comes in different styles or sizes, describe these options comprehensively. Explain when each variant might be used and how it affects the component's appearance and functionality. 9. Interactions: Provide a detailed explanation of how people can use the Accordion with various input methods (mouse, touchscreen, keyboard). Describe what happens during each type of interaction, including any visual feedback or changes in the component's state. Formatting Instructions: Use Markdown for headings and lists. When mentioning specific features or options, put their names in `backticks`. Keep the language clear and simple, avoiding technical terms where possible. If you must use a technical term, provide a brief explanation. Important Notes: 1. Do not include any code examples in your response. Focus on explaining how the Accordion works and how to use it effectively, without getting into the technical details of how to implement it. 2. Do not add any links to external websites. If you need to reference other UI components, use Carbon Design System components. 3. Aim to make your explanations about 15% more detailed than a typical concise response. Provide examples, elaborations, or additional context where appropriate to give a more comprehensive understanding of the Accordion component. Ensure your guide covers all specified aspects of the Accordion based on the provided code, explaining everything in a way that both designers and non-technical people can understand easily while providing a deeper level of detail.";
-    // Create the URL for the GitHub API
+    const guidanceMessage =
+      //  "Create a Markdown document titled Menu Component Guide with sections: Description, Purpose, When to Use, When Not to Use, Anatomy, States, Variants, Interactions. Description (3-4 sentences): Explain the Accordion component";
+      "Create a Markdown document titled Component Guide with sections: Description, Purpose, When to Use, When Not to Use, Anatomy, States, Variants, and Interactions. Describe the Accordion component, its function, appearance, and behavior. Explain how it improves user experience by organizing information. List scenarios for using an Accordion and when not to, suggesting alternatives. Break down its main parts and describe different states and variants. Detail interactions with mouse, touchscreen, and keyboard. Use Markdown headings and lists, backticks for feature names, clear language, and no code examples or external links. Reference Carbon Design System components if needed, with 15% more detail for clarity. Generate a brief description of [topic] using '#' for headings, '##' for subheadings, '**' for bold text, and '-' for bullet points.\nSeparate paragraphs with a blank line and use numbered lists where appropriate.";
+    // Featch realtime code from GitHub
 
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
@@ -26,24 +26,16 @@ function ChatInput({ addQuestion, addAnswer }) {
       .get(url)
       .then((response) => {
         if (response.status === 200) {
-          const fileContent = atob(response.data.content);
-
-          //assemble the prompt
+          const gitCode = atob(response.data.content);
+          //Adapted query to include both code and guidance message for Watson
           const prompt =
-            preMessage + "\n\n" + fileContent + "\n\n" + postMessage;
-          console.log("type prompt", typeof prompt);
-          // const finalDoc = callGenerateTextAPI(prompt);
-          // console.log("finalDoc", finalDoc);
+            preMessage + "\n\n" + gitCode + "\n\n" + guidanceMessage;
+          // Pass the Adapted query to Watson
           const finalDoc = callGenerateTextAPI(prompt);
           finalDoc.then((res) => {
-            console.log("finalDoc", res);
-            addAnswer(res);
+            //  addAnswer(res);
+            formatAndDisplayText(res);
           });
-
-          // generateCustomPrompt(prompt);
-
-          // console.log("custom promt", prompt);
-          //  addAnswer(prompt);
 
           return prompt;
         }
@@ -54,6 +46,60 @@ function ChatInput({ addQuestion, addAnswer }) {
       });
   };
 
+  function formatAndDisplayText(inputText) {
+    // Replace HTML special characters to prevent XSS
+    function escapeHTML(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Split the text into lines
+    const lines = inputText?.split("\n");
+
+    let formattedText = "";
+
+    lines &&
+      lines?.forEach((line, index) => {
+        // Handle headers
+        if (line.startsWith("## ")) {
+          line = line.replace(/^## /, "");
+          formattedText += "  " + line + "\n";
+        } else if (line.startsWith("# ")) {
+          line = line.replace(/^# /, "");
+          formattedText += line + "\n";
+        } else {
+          // Handle bold text
+          line = line.replace(/\*\*(.*?)\*\*/g, "$1");
+
+          // Handle bullet points
+          if (line.startsWith("- ")) {
+            line = "• " + line.slice(2);
+          }
+
+          // Move sentences starting with a digit to a new line
+          if (/^\d/.test(line)) {
+            formattedText += "\n" + line + "\n";
+          } else {
+            // If the previous line was a header, add a newline
+            if (
+              index > 0 &&
+              (lines[index - 1].startsWith("# ") ||
+                lines[index - 1].startsWith("## "))
+            ) {
+              formattedText += "\n";
+            }
+            formattedText += line + "\n";
+          }
+        }
+      });
+
+    addAnswer(formattedText);
+  }
+
   const slug = <Slug></Slug>;
 
   const onChange = (e) => setVal(e.target.value);
@@ -62,8 +108,6 @@ function ChatInput({ addQuestion, addAnswer }) {
       setisValid(true);
       addQuestion(val);
       const check = fetchGit();
-
-      //  callGenerateTextAPI("what is a prime number");
     } else {
       setisValid(false);
     }
