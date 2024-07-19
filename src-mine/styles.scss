@@ -20,24 +20,21 @@
 .question-wrapper {
   display: flex;
   margin: 5px 0;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .question-tile {
-  width: 56%;
-  word-wrap: break-word;
+  width: 400px;
 }
 
 .answer-wrapper {
   display: flex;
   margin: 5px 0;
-  justify-content: center;
 }
 
 .answer-tile {
   width: 56%;
   margin: auto;
-  word-wrap: break-word;
 }
 
 .send-button {

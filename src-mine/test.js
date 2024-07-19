@@ -126,7 +126,7 @@
 // };
 
 export async function callGenerateTextAPI(componentCode) {
-  const response = await fetch("http://localhost:8005/generate-text", {
+  const response = await fetch("http://localhost:8007/generate-text", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -1,23 +1,18 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import "./App.css";
 import ChatInput from "./ChatInput";
 import Question from "./Question";
 import Answer from "./Answer";
 import "./styles.scss";
-import { Loading } from "@carbon/react";
 
 function App() {
   const [listOfData, setListOfData] = useState([]);
-  const [showLoading, setShowLoading] = useState(false);
 
-  const addQuestion = (newQuestion) => {
-    setShowLoading(true)
+  const addQuestion = (newQuestion) =>
     setListOfData((data) => [...data, { ques: newQuestion }]);
-  }
-  const addAnswer = (newAnswer) => {
-    setShowLoading(false)
+  const addAnswer = (newAnswer) =>
     setListOfData((data) => [...data, { ans: newAnswer }]);
-  }
   return (
     <>
       <ChatInput addQuestion={addQuestion} addAnswer={addAnswer} />
@@ -30,7 +25,6 @@ function App() {
               <Answer>{data.ans}</Answer>
             );
           })}
-         { showLoading && <Loading/>}
       </div>
     </>
   );
